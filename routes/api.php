@@ -19,9 +19,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::get('/get-currencies', function () {
-    $currencyService = app()->make(CurrencyService::class);
-    $currencyService->getCurrencies();
-
-    return response()->json(['success' => true]);
-});
+Route::get('/get-currencies', [CurrencyService::class, 'getCurrencies']);

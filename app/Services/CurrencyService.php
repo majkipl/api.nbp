@@ -4,21 +4,32 @@ namespace App\Services;
 
 use App\Integrations\NbpApiIntegration;
 use App\Models\Currency;
+use Exception;
+use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class CurrencyService
 {
     protected nbpApiIntegration $nbpApiIntegration;
 
 
+    /**
+     * @param NbpApiIntegration $nbpApiIntegration
+     */
     public function __construct(NbpApiIntegration $nbpApiIntegration)
     {
         $this->nbpApiIntegration = $nbpApiIntegration;
     }
 
-    public function getCurrencies()
+
+    /**
+     * @return JsonResponse
+     * @throws GuzzleException
+     */
+    public function getCurrencies(): JsonResponse
     {
-        // 1. get data from api : example using integration
         $currencies = $this->nbpApiIntegration->getExchangeRates();
 
         if ($currencies) {
@@ -28,26 +39,27 @@ class CurrencyService
                 try {
                     $currency = Currency::where('currency_code', $rate->code)->first();
 
-                    // 2. check if currency exists in db
                     if ($currency) {
-                        // 3. then update
                         $currency->exchange_rate = $rate->mid;
                         $currency->save();
                     } else {
-                        // 4. else save
                         Currency::create([
-                            'id' => \Illuminate\Support\Str::uuid(),
+                            'id' => Str::uuid(),
                             'name' => $rate->currency,
                             'currency_code' => $rate->code,
                             'exchange_rate' => $rate->mid,
                         ]);
                     }
                     DB::commit();
-                } catch (\Exception $e) {
+
+                } catch (Exception $e) {
                     DB::rollback();
                 }
             }
+        } else {
+            return response()->json(['error' => true]);
         }
 
+        return response()->json(['success' => true]);
     }
 }
