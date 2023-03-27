@@ -8,11 +8,18 @@ use Illuminate\Support\Facades\DB;
 
 class CurrencyService
 {
+    protected nbpApiIntegration $nbpApiIntegration;
+
+
+    public function __construct(NbpApiIntegration $nbpApiIntegration)
+    {
+        $this->nbpApiIntegration = $nbpApiIntegration;
+    }
+
     public function getCurrencies()
     {
         // 1. get data from api : example using integration
-        $nbpApi = new NbpApiIntegration();
-        $currencies = $nbpApi->getExchangeRates();
+        $currencies = $this->nbpApiIntegration->getExchangeRates();
 
         if ($currencies) {
             foreach ($currencies[0]->rates as $rate) {
